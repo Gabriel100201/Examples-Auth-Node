@@ -36,14 +36,13 @@ const authController = {
 
       const { email, password } = req.body;
       // Find the user by email
-      const [rows] = await User.findByEmail(email);
-
+      const rows = await User.findByEmail(email);
       if (rows.length === 0) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       const user = rows[0];
-      // Compare the provided password with the hashed password
+
       const isPasswordValid = await bcrypt.compare(password, user.password);
 
       if (!isPasswordValid) {
@@ -52,12 +51,15 @@ const authController = {
 
       // Generate a JWT token
       const token = jwt.sign(
-        { userId: user.id, email: user.email },
+        { email: user.email },
         process.env.DB_SECRET,
         {
           expiresIn: "1h",
         }
       );
+      
+      // ACA SE GUARDA
+      User.updateToken(user.id, token);
 
       res.status(200).json({ token: token });
     } catch (error) {
@@ -66,19 +68,18 @@ const authController = {
     }
   },
 
-  validateToken: (req, res) => {
-    const token = req.headers.authorization;
-    if (!token) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-    try {
-      const decoded = jwt.verify(token, process.env.DB_SECRET);
-      req.userId = decoded.userId;
-      return res.status(200).json({ message: "Token validate" })
-    } catch (error) {
-      console.error(error);
-      return res.status(401).json({ message: "Invalid token" });
-    }
+  getInfo: async (req, res) => {
+
+    // ACA FALTA QUE NO RECIBA EL TOKEN POR PARAMETRO
+    // SI NO QUE LO HAGA POR req.Authorization.token
+
+    const {token} = req.body;
+
+    // Encuentra el id del usuario por el token
+    const [{id}] = await User.findIdByToken(token);
+    const info = await User.getInfoUserById(id);
+    res.status(200).json(info[0]);
+    return;
   }
 };
 
