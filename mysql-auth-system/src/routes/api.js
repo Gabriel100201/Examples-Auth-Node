@@ -11,10 +11,10 @@ const validateTokenMiddleware = require("../middleware/validateToken");
 
 
 router.post("/register", userRegisterValidationRules(), authController.register);
-
 router.post("/login", userLoginValidationRules(), authController.login);
+
+// Midleware que recibe el token por parametro para ver si es un usuario logueado correctamente
 router.use(validateTokenMiddleware);
 router.post("/getInfoUser", authController.getInfo)
-/* router.get("/validateToken", authController.validateToken) */
 
 module.exports = router;
